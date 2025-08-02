@@ -1,3 +1,6 @@
+/* 桌面版維持原樣 */
+
+/* 平板/窄版 */
 @media (max-width: 1024px) {
   main {
     flex-direction: column;
@@ -27,11 +30,7 @@
     width: 100% !important;
     box-sizing: border-box;
   }
-  select, input[type="file"] {
-    width: 100% !important;
-    box-sizing: border-box;
-  }
-  button.action-btn, #downloadBtn {
+  select, input[type="file"], button.action-btn, #downloadBtn {
     width: 100%;
     box-sizing: border-box;
   }
@@ -53,11 +52,12 @@
   }
 }
 
+/* 手機版：輸入全頁 + 預覽浮出 */
 @media (max-width: 480px) {
-  /* 輸入內容全螢幕顯示 */
+  /* 輸入全頁 */
   .sidebar {
     max-height: none !important;
-    height: calc(100vh - 50px); /* 扣掉 header 高度 */
+    height: calc(100vh - 50px); /* 扣掉 header */
   }
   .sidebar.collapsed {
     height: 60px !important;
@@ -69,15 +69,15 @@
     gap: 10px;
   }
   textarea {
-    height: calc(100% - 120px) !important; /* 扣掉其他選項空間 */
+    height: calc(100% - 120px) !important;
     min-height: 200px;
   }
 
-  /* 預覽面板：手機版預設隱藏，按鈕控制 */
+  /* 預覽浮出 */
   .right-panel {
     transition: transform 0.3s ease, opacity 0.3s ease;
     position: fixed;
-    top: 50px; /* 預留 header */
+    top: 50px;
     right: 0;
     width: 100%;
     height: calc(100vh - 50px);
@@ -96,9 +96,9 @@
     pointer-events: auto;
   }
 
-  /* 預覽切換按鈕 */
+  /* 手機版顯示預覽切換按鈕 */
   .preview-toggle-btn {
-    display: block;
+    display: block !important;
     position: fixed;
     bottom: 20px;
     right: 20px;
@@ -117,4 +117,9 @@
   .preview-toggle-btn:hover {
     background: var(--active-tab);
   }
+}
+
+/* 桌面版隱藏按鈕 */
+.preview-toggle-btn {
+  display: none;
 }
