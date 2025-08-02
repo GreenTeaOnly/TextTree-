@@ -3,121 +3,368 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Tree &lt;-&gt; Text 雙向轉換器（符號樹文字版）</title>
+<title>Tree &lt;-&gt; Text 雙向轉換器</title>
 <style>
+  :root {
+    --bg-gradient: linear-gradient(135deg, #dfe9f3, #ffffff);
+    --panel-bg: rgba(255,255,255,0.75);
+    --input-bg: rgba(255,255,255,0.95);
+    --text-color: #1f1f1f;
+    --tab-bg: rgba(230,230,230,0.8);
+    --active-tab: #4b5fe2;
+    --btn-gradient: linear-gradient(45deg, #4b5fe2, #fc5c7d);
+  }
+  body.dark {
+    --bg-gradient: linear-gradient(135deg, #1e2026, #3b3f58);
+    --panel-bg: rgba(40,40,50,0.85);
+    --input-bg: rgba(60,60,70,0.95);
+    --text-color: #f2f2f2;
+    --tab-bg: rgba(80,80,90,0.8);
+    --active-tab: #9da6ff;
+    --btn-gradient: linear-gradient(45deg, #6a82fb, #fc5c7d);
+  }
+
+  * { box-sizing: border-box; }
   body {
-    font-family: "Microsoft JhengHei", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    max-width: 700px;
-    margin: 20px auto;
-    background: #f9fafb;
-    color: #222;
-    line-height: 1.5;
-    padding: 10px 20px;
+    margin: 0;
+    font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+    background: var(--bg-gradient);
+    color: var(--text-color);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.4s ease;
   }
-  h1 {
-    text-align: center;
-    margin-bottom: 25px;
-    color: #333;
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    font-size: 20px;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255,255,255,0.25);
   }
-  label {
-    font-weight: 600;
+  header .toggle-theme {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--text-color);
+    padding: 4px 8px;
+    margin: 0;
+    width: auto;
+    height: auto;
+    line-height: 1;
+    transition: background-color 0.3s ease;
+  }
+  header .toggle-theme:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+  }
+  main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* 側邊欄 */
+  .sidebar {
+    width: 320px;
+    background: var(--panel-bg);
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s;
+    overflow: hidden;
+    position: relative;
+  }
+  .sidebar.collapsed {
+    width: 60px;
+  }
+  .sidebar-toggle {
+    background: none;
+    border: none;
+    font-size: 22px;
+    padding: 10px;
+    cursor: pointer;
+    color: var(--text-color);
+    align-self: flex-end;
+  }
+  .sidebar-content {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* 折疊時顯示圖示模式 */
+  .sidebar.collapsed .sidebar-content > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+  }
+  .sidebar.collapsed label,
+  .sidebar.collapsed select,
+  .sidebar.collapsed textarea,
+  .sidebar.collapsed input,
+  .sidebar.collapsed button.action-btn {
+    display: none;
+  }
+  .sidebar.collapsed .icon-only {
     display: block;
-    margin-top: 12px;
+    font-size: 22px;
+    cursor: pointer;
+  }
+  .icon-only {
+    display: none;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: absolute;
+    left: 60px;
+    background: #000;
+    color: #fff;
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(-50%);
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    top: 50%;
+  }
+  .sidebar.collapsed .sidebar-content > div:hover .tooltip {
+    opacity: 1;
+  }
+
+  label {
+    font-size: 14px;
+    font-weight: 600;
   }
   select, button, input[type="file"] {
-    font-size: 16px;
-    padding: 8px 12px;
-    margin-top: 6px;
-    border: 1.5px solid #bbb;
-    border-radius: 5px;
-    background: #fff;
-    transition: border-color 0.2s;
+    font-size: 14px;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-color);
     width: 100%;
-  }
-  select:focus, button:focus, input[type="file"]:focus {
-    outline: none;
-    border-color: #409eff;
-    box-shadow: 0 0 5px rgba(64, 158, 255, 0.5);
-  }
-  button {
-    cursor: pointer;
-    background: #409eff;
-    color: white;
-    border-color: #409eff;
-    user-select: none;
-    transition: background-color 0.3s;
-    margin-top: 16px;
-  }
-  button:hover {
-    background: #66aaff;
-  }
-  button:active {
-    background: #2c79d7;
   }
   textarea {
     width: 100%;
-    height: 180px;
-    font-family: monospace;
-    font-size: 16px;
-    margin-top: 10px;
-    border: 1.5px solid #bbb;
-    border-radius: 6px;
+    height: 160px;
+    border: none;
+    border-radius: 10px;
     padding: 10px;
-    resize: vertical;
-    background: #fafafa;
-    color: #222;
-    transition: border-color 0.2s;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-family: monospace;
+    font-size: 14px;
   }
-  textarea:focus {
-    outline: none;
-    border-color: #409eff;
-    box-shadow: 0 0 6px rgba(64, 158, 255, 0.4);
+  button.action-btn {
+    background: var(--btn-gradient);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
   }
-  #outputText {
-    background: #f3f6f9;
-    border: 1.5px solid #ddd;
-    border-radius: 6px;
-    padding: 14px;
+  button.action-btn:hover {
+    filter: brightness(1.08);
+  }
+
+  /* 預覽區 */
+  .right-panel {
+    flex: 1;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    margin-left: 2px;
+    display: flex;
+    flex-direction: column;
+  }
+  .tabs {
+    display: flex;
+    background: var(--tab-bg);
+  }
+  .tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-color);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+  .tab.active {
+    border-bottom: 3px solid var(--active-tab);
+    color: var(--active-tab);
+  }
+  .tab-content {
+    flex: 1;
+    padding: 20px;
+    overflow: auto;
     font-family: monospace;
     white-space: pre-wrap;
-    height: 240px;
-    overflow: auto;
-    color: #222;
-    margin-top: 24px;
+    position: relative;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 12px;
+    right: 20px;
+    background: var(--btn-gradient);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+
+  /* 側邊欄拖拉條 */
+  .drag-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 100%;
+    cursor: ew-resize;
+    background: transparent;
+    z-index: 100;
+  }
+  .drag-handle:hover {
+    background: rgba(100, 100, 100, 0.2);
   }
 </style>
 </head>
 <body>
+<header>
+  <span>🌳 Tree &lt;-&gt; Text 雙向轉換器</span>
+  <button class="toggle-theme" id="themeBtn">🌙</button>
+</header>
+<main>
+  <!-- 側邊欄 -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebarToggle">☰</button>
+    <div class="sidebar-content">
+      <div>
+        <label>轉換方向：</label>
+        <select id="mode">
+          <option value="treeToText">Tree To Text</option>
+          <option value="textToTree">Text To Tree</option>
+        </select>
+        <span class="icon-only">🔄</span>
+        <span class="tooltip">轉換方向</span>
+      </div>
+      <div>
+        <label>讀取檔案：</label>
+        <input type="file" id="fileInput" accept=".json,.txt">
+        <span class="icon-only">📂</span>
+        <span class="tooltip">讀取檔案</span>
+      </div>
+      <div>
+        <label>輸入內容：</label>
+        <textarea id="inputArea" placeholder="貼上 JSON / 縮排文字 / 符號樹文字"></textarea>
+        <span class="icon-only">📝</span>
+        <span class="tooltip">輸入內容</span>
+      </div>
+      <div>
+        <label>輸出格式：</label>
+        <select id="saveFormat">
+          <option value="txt">符號樹文字 (.txt)</option>
+          <option value="json">JSON (.json)</option>
+        </select>
+        <span class="icon-only">💾</span>
+        <span class="tooltip">輸出格式</span>
+      </div>
+      <button class="action-btn" id="downloadBtn">下載結果</button>
+    </div>
+    <div class="drag-handle" id="dragHandle"></div>
+  </div>
 
-<h1>Tree &lt;-&gt; Text 雙向轉換器（符號樹文字版）</h1>
-
-<label for="mode">轉換方向：</label>
-<select id="mode">
-  <option value="treeToText">Tree To Text</option>
-  <option value="textToTree">Text To Tree</option>
-</select>
-
-<label for="fileInput" style="margin-top: 20px;">讀取本地檔案 (.json/.txt)：</label>
-<input type="file" id="fileInput" accept=".json,.txt" />
-<button id="loadBtn">讀取檔案</button>
-
-<label for="inputArea" style="margin-top: 24px;">輸入：</label>
-<textarea id="inputArea" placeholder="貼上 JSON 或 縮排文字／符號樹文字"></textarea>
-
-<button id="convertBtn">執行轉換</button>
-<button id="downloadBtn">下載結果</button>
-
-<label for="outputText" style="margin-top: 32px;">文字結果</label>
-<pre id="outputText" tabindex="0" aria-label="文字輸出區"></pre>
+  <!-- 預覽區 -->
+  <div class="right-panel">
+    <div class="tabs">
+      <div class="tab active" data-format="symbol">符號樹</div>
+      <div class="tab" data-format="json">JSON</div>
+      <div class="tab" data-format="indent">縮排文字</div>
+    </div>
+    <div class="tab-content">
+      <button class="copy-btn" id="copyBtn">複製</button>
+      <pre id="outputContent"></pre>
+    </div>
+  </div>
+</main>
 
 <script>
   let currentTree = null;
+  let currentTab = "symbol";
 
-  function showError(msg) {
-    alert(msg);
+  /* 主題切換 */
+  const body = document.body;
+  const themeBtn = document.getElementById("themeBtn");
+  themeBtn.onclick = () => {
+    body.classList.toggle("dark");
+    themeBtn.textContent = body.classList.contains("dark") ? "☀️" : "🌙";
+    localStorage.setItem("theme", body.classList.contains("dark") ? "dark" : "light");
+  };
+  if(localStorage.getItem("theme")==="dark"){
+    body.classList.add("dark");
+    themeBtn.textContent = "☀️";
   }
 
-  // 縮排/符號樹文字轉樹狀物件
+  /* 側邊欄切換 & 寬度調整 */
+  const sidebar = document.getElementById("sidebar");
+  const sidebarToggle = document.getElementById("sidebarToggle");
+  const dragHandle = document.getElementById("dragHandle");
+  let isDragging = false;
+
+  sidebarToggle.onclick = () => {
+    if (sidebar.classList.contains("collapsed")) {
+      sidebar.classList.remove("collapsed");
+      sidebar.style.width = "300px"; // 展開預設寬度
+    } else {
+      sidebar.classList.add("collapsed");
+      sidebar.style.width = "60px"; // 折疊寬度
+    }
+  };
+
+  // 折疊狀態下點擊圖示 → 取消摺疊
+  document.querySelectorAll(".sidebar-content > div").forEach(div=>{
+    div.addEventListener("click", () => {
+      if(sidebar.classList.contains("collapsed")) sidebar.classList.remove("collapsed");
+    });
+  });
+
+  dragHandle.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    document.body.style.userSelect = "none"; // 禁止選取文字
+  });
+
+  window.addEventListener("mouseup", (e) => {
+    if (isDragging) {
+      isDragging = false;
+      document.body.style.userSelect = ""; // 解除禁止
+    }
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    let newWidth = e.clientX;
+    if (newWidth < 300) newWidth = 300;  // 拖拉最小300px
+    if (newWidth > 600) newWidth = 600;  // 最大600px
+    sidebar.style.width = newWidth + "px";
+    if (sidebar.classList.contains("collapsed")) {
+      sidebar.classList.remove("collapsed");
+    }
+  });
+
+  /* Tree/Text 轉換邏輯 */
   function textToTree(lines) {
     if (!lines.length) return null;
     const root = { name: lines[0].trim(), children: [] };
@@ -134,15 +381,12 @@
         stack.pop();
         indentStack.pop();
       }
-      const parent = stack[stack.length - 1];
-      parent.children.push(node);
+      stack[stack.length - 1].children.push(node);
       stack.push(node);
       indentStack.push(indent);
     }
     return root;
   }
-
-  // 樹狀物件轉符號樹文字 (├── │ └──)
   function treeToSymbolText(node, prefix = "", isLast = true) {
     if (!node) return "";
     const pointer = isLast ? "└── " : "├── ";
@@ -150,94 +394,81 @@
     const children = node.children || [];
     const newPrefix = prefix + (isLast ? "    " : "│   ");
     children.forEach((child, i) => {
-      const lastChild = i === children.length - 1;
-      line += treeToSymbolText(child, newPrefix, lastChild);
+      line += treeToSymbolText(child, newPrefix, i === children.length - 1);
+    });
+    return line;
+  }
+  function treeToIndentText(node, indent = 0) {
+    if (!node) return "";
+    let line = " ".repeat(indent * 4) + node.name + "\n";
+    (node.children || []).forEach(child => {
+      line += treeToIndentText(child, indent + 1);
     });
     return line;
   }
 
-  // 讀取本地檔案事件
-  document.getElementById("loadBtn").onclick = () => {
-    const fileInput = document.getElementById("fileInput");
-    if (!fileInput.files.length) {
-      showError("請先選擇檔案！");
-      return;
-    }
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-    reader.onload = e => {
-      const text = e.target.result;
-      if (file.name.endsWith(".json")) {
-        try {
-          JSON.parse(text);
-          document.getElementById("inputArea").value = text;
-        } catch {
-          showError("JSON 解析失敗，請檢查檔案內容！");
-        }
-      } else {
-        document.getElementById("inputArea").value = text;
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  // 轉換按鈕事件
-  document.getElementById("convertBtn").onclick = () => {
-    const mode = document.getElementById("mode").value;
+  function parseInput() {
     const input = document.getElementById("inputArea").value.trim();
-
-    if (!input) {
-      showError("請輸入內容！");
-      return;
+    if (!input) return null;
+    try { return JSON.parse(input); }
+    catch {
+      return textToTree(input.split(/\r?\n/).filter(l => l.trim() !== ""));
     }
+  }
+  function updateOutput() {
+    if (!currentTree) { document.getElementById("outputContent").textContent = ""; return; }
+    let out = "";
+    if (currentTab === "symbol") out = treeToSymbolText(currentTree);
+    if (currentTab === "json") out = JSON.stringify(currentTree, null, 2);
+    if (currentTab === "indent") out = treeToIndentText(currentTree);
+    document.getElementById("outputContent").textContent = out;
+    localStorage.setItem("input", document.getElementById("inputArea").value);
+  }
 
-    if (mode === "treeToText") {
-      let tree = null;
-      try {
-        tree = JSON.parse(input);
-      } catch (e) {
-        showError("JSON 解析失敗：" + e.message);
-        return;
-      }
-      currentTree = tree;
+  /* 自動載入上次編輯 */
+  if(localStorage.getItem("input")){
+    document.getElementById("inputArea").value = localStorage.getItem("input");
+    currentTree = parseInput();
+    updateOutput();
+  }
 
-      // 符號樹文字輸出
-      const outText = treeToSymbolText(tree);
-      document.getElementById("outputText").textContent = outText;
+  document.getElementById("inputArea").addEventListener("input", () => {
+    currentTree = parseInput(); updateOutput();
+  });
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      tab.classList.add("active");
+      currentTab = tab.dataset.format;
+      updateOutput();
+    });
+  });
 
-    } else if (mode === "textToTree") {
-      const lines = input.split(/\r?\n/).filter(l => l.trim() !== "");
-      const tree = textToTree(lines);
-      currentTree = tree;
-
-      // JSON 格式輸出
-      document.getElementById("outputText").textContent = JSON.stringify(tree, null, 2);
-    }
+  document.getElementById("copyBtn").onclick = () => {
+    navigator.clipboard.writeText(document.getElementById("outputContent").textContent)
+      .then(() => alert("已複製到剪貼簿"));
   };
-
-  // 下載結果按鈕事件
   document.getElementById("downloadBtn").onclick = () => {
-    if (!currentTree) {
-      showError("請先執行轉換！");
-      return;
-    }
-    const mode = document.getElementById("mode").value;
-    let content = "";
-
-    if (mode === "treeToText") {
-      content = treeToSymbolText(currentTree);
-    } else if (mode === "textToTree") {
-      content = JSON.stringify(currentTree, null, 2);
-    }
-
+    if (!currentTree) return alert("請先輸入內容！");
+    const format = document.getElementById("saveFormat").value;
+    let content = "", filename = "result";
+    if (format === "json") { content = JSON.stringify(currentTree, null, 2); filename += ".json"; }
+    else { content = treeToSymbolText(currentTree); filename += ".txt"; }
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = mode === "textToTree" ? "tree.json" : "tree.txt";
-    a.click();
-    URL.revokeObjectURL(a.href);
+    a.href = URL.createObjectURL(blob); a.download = filename; a.click();
   };
-</script>
 
+  document.getElementById("fileInput").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById("inputArea").value = ev.target.result;
+      currentTree = parseInput(); updateOutput();
+    };
+    reader.readAsText(file);
+  });
+</script>
 </body>
 </html>
