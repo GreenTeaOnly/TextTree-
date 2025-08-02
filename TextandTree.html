@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tree &lt;-&gt; Text 雙向轉換器（符號樹文字版）</title>
+<style>
+  body {
+    font-family: "Microsoft JhengHei", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 700px;
+    margin: 20px auto;
+    background: #f9fafb;
+    color: #222;
+    line-height: 1.5;
+    padding: 10px 20px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #333;
+  }
+  label {
+    font-weight: 600;
+    display: block;
+    margin-top: 12px;
+  }
+  select, button, input[type="file"] {
+    font-size: 16px;
+    padding: 8px 12px;
+    margin-top: 6px;
+    border: 1.5px solid #bbb;
+    border-radius: 5px;
+    background: #fff;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  select:focus, button:focus, input[type="file"]:focus {
+    outline: none;
+    border-color: #409eff;
+    box-shadow: 0 0 5px rgba(64, 158, 255, 0.5);
+  }
+  button {
+    cursor: pointer;
+    background: #409eff;
+    color: white;
+    border-color: #409eff;
+    user-select: none;
+    transition: background-color 0.3s;
+    margin-top: 16px;
+  }
+  button:hover {
+    background: #66aaff;
+  }
+  button:active {
+    background: #2c79d7;
+  }
+  textarea {
+    width: 100%;
+    height: 180px;
+    font-family: monospace;
+    font-size: 16px;
+    margin-top: 10px;
+    border: 1.5px solid #bbb;
+    border-radius: 6px;
+    padding: 10px;
+    resize: vertical;
+    background: #fafafa;
+    color: #222;
+    transition: border-color 0.2s;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: #409eff;
+    box-shadow: 0 0 6px rgba(64, 158, 255, 0.4);
+  }
+  #outputText {
+    background: #f3f6f9;
+    border: 1.5px solid #ddd;
+    border-radius: 6px;
+    padding: 14px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    height: 240px;
+    overflow: auto;
+    color: #222;
+    margin-top: 24px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Tree &lt;-&gt; Text 雙向轉換器（符號樹文字版）</h1>
+
+<label for="mode">轉換方向：</label>
+<select id="mode">
+  <option value="treeToText">Tree To Text</option>
+  <option value="textToTree">Text To Tree</option>
+</select>
+
+<label for="fileInput" style="margin-top: 20px;">讀取本地檔案 (.json/.txt)：</label>
+<input type="file" id="fileInput" accept=".json,.txt" />
+<button id="loadBtn">讀取檔案</button>
+
+<label for="inputArea" style="margin-top: 24px;">輸入：</label>
+<textarea id="inputArea" placeholder="貼上 JSON 或 縮排文字／符號樹文字"></textarea>
+
+<button id="convertBtn">執行轉換</button>
+<button id="downloadBtn">下載結果</button>
+
+<label for="outputText" style="margin-top: 32px;">文字結果</label>
+<pre id="outputText" tabindex="0" aria-label="文字輸出區"></pre>
+
+<script>
+  let currentTree = null;
+
+  function showError(msg) {
+    alert(msg);
+  }
+
+  // 縮排/符號樹文字轉樹狀物件
+  function textToTree(lines) {
+    if (!lines.length) return null;
+    const root = { name: lines[0].trim(), children: [] };
+    const stack = [root];
+    const indentStack = [0];
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      const cleanLine = line.replace(/^[\s│├└─]+/, "");
+      const indent = line.match(/^(\s*)/)[1].length;
+      const name = cleanLine.trim();
+      if (!name) continue;
+      const node = { name, children: [] };
+      while (indentStack.length && indent <= indentStack[indentStack.length - 1]) {
+        stack.pop();
+        indentStack.pop();
+      }
+      const parent = stack[stack.length - 1];
+      parent.children.push(node);
+      stack.push(node);
+      indentStack.push(indent);
+    }
+    return root;
+  }
+
+  // 樹狀物件轉符號樹文字 (├── │ └──)
+  function treeToSymbolText(node, prefix = "", isLast = true) {
+    if (!node) return "";
+    const pointer = isLast ? "└── " : "├── ";
+    let line = prefix + pointer + node.name + "\n";
+    const children = node.children || [];
+    const newPrefix = prefix + (isLast ? "    " : "│   ");
+    children.forEach((child, i) => {
+      const lastChild = i === children.length - 1;
+      line += treeToSymbolText(child, newPrefix, lastChild);
+    });
+    return line;
+  }
+
+  // 讀取本地檔案事件
+  document.getElementById("loadBtn").onclick = () => {
+    const fileInput = document.getElementById("fileInput");
+    if (!fileInput.files.length) {
+      showError("請先選擇檔案！");
+      return;
+    }
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    reader.onload = e => {
+      const text = e.target.result;
+      if (file.name.endsWith(".json")) {
+        try {
+          JSON.parse(text);
+          document.getElementById("inputArea").value = text;
+        } catch {
+          showError("JSON 解析失敗，請檢查檔案內容！");
+        }
+      } else {
+        document.getElementById("inputArea").value = text;
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  // 轉換按鈕事件
+  document.getElementById("convertBtn").onclick = () => {
+    const mode = document.getElementById("mode").value;
+    const input = document.getElementById("inputArea").value.trim();
+
+    if (!input) {
+      showError("請輸入內容！");
+      return;
+    }
+
+    if (mode === "treeToText") {
+      let tree = null;
+      try {
+        tree = JSON.parse(input);
+      } catch (e) {
+        showError("JSON 解析失敗：" + e.message);
+        return;
+      }
+      currentTree = tree;
+
+      // 符號樹文字輸出
+      const outText = treeToSymbolText(tree);
+      document.getElementById("outputText").textContent = outText;
+
+    } else if (mode === "textToTree") {
+      const lines = input.split(/\r?\n/).filter(l => l.trim() !== "");
+      const tree = textToTree(lines);
+      currentTree = tree;
+
+      // JSON 格式輸出
+      document.getElementById("outputText").textContent = JSON.stringify(tree, null, 2);
+    }
+  };
+
+  // 下載結果按鈕事件
+  document.getElementById("downloadBtn").onclick = () => {
+    if (!currentTree) {
+      showError("請先執行轉換！");
+      return;
+    }
+    const mode = document.getElementById("mode").value;
+    let content = "";
+
+    if (mode === "treeToText") {
+      content = treeToSymbolText(currentTree);
+    } else if (mode === "textToTree") {
+      content = JSON.stringify(currentTree, null, 2);
+    }
+
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = mode === "textToTree" ? "tree.json" : "tree.txt";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+</script>
+
+</body>
+</html>
