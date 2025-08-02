@@ -15,7 +15,8 @@
 </header>
 <main>
   <!-- 側邊欄 -->
-  <button class="preview-toggle-btn" id="previewToggleBtn" title="顯示預覽">👁️</button>
+  <button class="preview-toggle-btn" id="previewToggleBtn" title="顯示預覽"></button>
+
 
   <div class="sidebar" id="sidebar">
     <button class="sidebar-toggle" id="sidebarToggle">☰</button>
@@ -196,18 +197,34 @@
   const previewPanel = document.querySelector(".right-panel");
   const previewToggleBtn = document.getElementById("previewToggleBtn");
 
+  function isMobile() {
+    return window.innerWidth <= 480;
+  }
+
+  // 切換預覽面板
   previewToggleBtn.addEventListener("click", () => {
     previewPanel.classList.toggle("active");
     previewToggleBtn.textContent = previewPanel.classList.contains("active") ? "隱藏預覽" : "顯示預覽";
   });
 
+  // 視窗變動時重設狀態（避免桌面版被隱藏）
+  window.addEventListener("resize", () => {
+    if (!isMobile()) {
+      previewPanel.classList.remove("active");
+      previewToggleBtn.textContent = "顯示預覽";
+    }
+  });
+
+  // 手機版進入時預設隱藏
+  if (isMobile()) {
+    previewPanel.classList.remove("active");
+  }
 
 // 初始手機版自動隱藏預覽（可選）
-if(window.innerWidth <= 480){
-  previewPanel.classList.add("hidden");
-  previewToggleBtn.textContent = "隱藏預覽";
-}
-
+  if(window.innerWidth <= 480){
+    previewPanel.classList.add("hidden");
+    previewToggleBtn.textContent = "顯示預覽";
+  }
 
   /* 自動載入上次編輯 */
   if(localStorage.getItem("input")){
