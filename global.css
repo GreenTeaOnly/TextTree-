@@ -1,0 +1,235 @@
+:root {
+    --bg-gradient: linear-gradient(135deg, #dfe9f3, #ffffff);
+    --panel-bg: rgba(228, 228, 228, 0.75);
+    --input-bg: rgba(255,255,255,0.95);
+    --text-color: #1f1f1f;
+    --tab-bg: rgba(230,230,230,0.8);
+    --active-tab: #4b5fe2;
+    --btn-gradient: linear-gradient(45deg, #4b5fe2, #fc5c7d);
+  }
+  body.dark {
+    --bg-gradient: linear-gradient(135deg, #1e2026, #3b3f58);
+    --panel-bg: rgba(40,40,50,0.85);
+    --input-bg: rgba(60,60,70,0.95);
+    --text-color: #f2f2f2;
+    --tab-bg: rgba(80,80,90,0.8);
+    --active-tab: #9da6ff;
+    --btn-gradient: linear-gradient(45deg, #6a82fb, #fc5c7d);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+    background: var(--bg-gradient);
+    color: var(--text-color);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.4s ease;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    font-size: 20px;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255,255,255,0.25);
+  }
+  header .toggle-theme {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--text-color);
+    padding: 4px 8px;
+    margin: 0;
+    width: auto;
+    height: auto;
+    line-height: 1;
+    transition: background-color 0.3s ease;
+  }
+  header .toggle-theme:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+  }
+  main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* 側邊欄 */
+  .sidebar {
+    width: 320px;
+    background: var(--panel-bg);
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s;
+    overflow: hidden;
+    position: relative;
+  }
+  .sidebar.collapsed {
+    width: 60px;
+  }
+  .sidebar-toggle {
+    background: none;
+    border: none;
+    font-size: 22px;
+    padding: 10px;
+    cursor: pointer;
+    color: var(--text-color);
+    align-self: flex-end;
+  }
+  .sidebar-content {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* 折疊時顯示圖示模式 */
+  .sidebar.collapsed .sidebar-content > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+  }
+  .sidebar.collapsed label,
+  .sidebar.collapsed select,
+  .sidebar.collapsed textarea,
+  .sidebar.collapsed input,
+  .sidebar.collapsed button.action-btn {
+    display: none;
+  }
+  .sidebar.collapsed .icon-only {
+    display: block;
+    font-size: 22px;
+    cursor: pointer;
+  }
+  .icon-only {
+    display: none;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: absolute;
+    left: 60px;
+    background: #000;
+    color: #cfcbcb;
+    padding: 6px 10px;
+    font-size: 13px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(-50%);
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    top: 50%;
+  }
+  .sidebar.collapsed .sidebar-content > div:hover .tooltip {
+    opacity: 1;
+  }
+
+  label {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  select, button, input[type="file"] {
+    font-size: 14px;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    width: 100%;
+  }
+  textarea {
+    width: 100%;
+    height: 160px;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-family: monospace;
+    font-size: 14px;
+  }
+  button.action-btn {
+    background: var(--btn-gradient);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button.action-btn:hover {
+    filter: brightness(1.08);
+  }
+
+  /* 預覽區 */
+  .right-panel {
+    flex: 1;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    margin-left: 2px;
+    display: flex;
+    flex-direction: column;
+  }
+  .tabs {
+    display: flex;
+    background: var(--tab-bg);
+  }
+  .tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-color);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+  .tab.active {
+    border-bottom: 3px solid var(--active-tab);
+    color: var(--active-tab);
+  }
+  .tab-content {
+    flex: 1;
+    padding: 20px;
+    overflow: auto;
+    font-family: monospace;
+    white-space: pre-wrap;
+    position: relative;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 12px;
+    right: 20px;
+    background: var(--btn-gradient);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+
+  /* 側邊欄拖拉條 */
+  .drag-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 100%;
+    cursor: ew-resize;
+    background: transparent;
+    z-index: 100;
+  }
+  .drag-handle:hover {
+    background: rgba(100, 100, 100, 0.2);
+  }
